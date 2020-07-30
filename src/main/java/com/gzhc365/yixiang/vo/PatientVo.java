@@ -148,6 +148,9 @@ public class PatientVo implements Serializable {
     @Column(name = "STATE")
     private String state;
 
+    @Column(name = "PATIENT_ID")
+    private String patHisNo;
+
     @Transient
     private String platformSource;
     
@@ -269,7 +272,7 @@ public class PatientVo implements Serializable {
     private String parentIdNoCipher;
 
     public String getId() {
-        return pre + count;
+        return String.valueOf(Long.parseLong(pre) + count);
     }
 
     public void setId(String id) {
@@ -512,5 +515,13 @@ public class PatientVo implements Serializable {
 
     public void setSaltValue(String saltValue) {
         this.saltValue = saltValue;
+    }
+
+    public String getPatHisNo() {
+        return patHisNo;
+    }
+
+    public void setPatHisNo(String patHisNo) {
+        this.patHisNo = patHisNo;
     }
 }

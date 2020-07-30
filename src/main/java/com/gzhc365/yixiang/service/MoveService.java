@@ -23,6 +23,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -49,7 +50,7 @@ public class MoveService {
     public List<PatientVo> findUserByHospitalId(HospitalVo hospitalVo){
         logger.info("入参:{}",JSONObject.toJSONString(hospitalVo));
         int count = userDao.countGroupByHospitalId(hospitalVo.getHospitalId());
-        int pageNum = 50000;
+        int pageNum = 5000;
         int pageCount = (count / pageNum) + 1;
         if(count < pageNum){
             pageCount = 1;
@@ -64,13 +65,13 @@ public class MoveService {
                 n.setCount(Integer.parseInt(String.valueOf(redisTemplate.opsForValue().increment("id"))));
                 n.setPre(hospitalVo.getPre());
                 n.setPlatformId(Integer.parseInt(hospitalVo.getHisId()));
-                redisTemplate.opsForValue().set(n.getOpenId(), n.getId());
+                redisTemplate.opsForValue().set(n.getOpenId(), n.getId(), 100, TimeUnit.MINUTES);
             });
 
             try {
                 boolean isFirst = false;
-                int mod = i % 20;
-                int div = i / 20;
+                int mod = i % 10;
+                int div = i / 10;
                 if (mod == 0) {
                     isFirst = true;
                     File file = new File(  "t_uc_user-" + (div + 1) + ".txt");
@@ -90,15 +91,16 @@ public class MoveService {
 
     public List<PatientVo> findPatByHospitalId(HospitalVo hospitalVo){
         logger.info("入参:{}",JSONObject.toJSONString(hospitalVo));
-        int count = userDao.countByHospitalId(hospitalVo.getHospitalId());
-        int pageNum = 50000;
+        int count = patientDao.countByHospitalIdAndState(hospitalVo.getHospitalId(), "1");
+        int pageNum = 5000;
         int pageCount = (count / pageNum) + 1;
         logger.info("总行数:{},总页数:{},单页记录数:{}",count, pageCount,pageNum);
         BufferedWriter writer = null;
         for (int i = 0; i < pageCount; i++) {
             int beginIndex = i * pageNum;
             //获取到用户数据
-            List<PatientVo> patientVos = patientDao.findByHospitalIdAndStateOrderByCreateTime(hospitalVo.getHospitalId(),"1", PageRequest.of(beginIndex, pageNum)).toList();
+            System.out.println("beginIndex="+beginIndex  + "----pageNum="+pageNum);
+            List<PatientVo> patientVos = patientDao.findByHospitalIdAndStateOrderByCreateTime(hospitalVo.getHospitalId(),"1", PageRequest.of(i, pageNum)).toList();
             patientVos.forEach(n -> {
                 n.setCount(Integer.parseInt(String.valueOf(redisTemplate.opsForValue().increment("id"))));
                 n.setPre(hospitalVo.getPre());
@@ -112,8 +114,8 @@ public class MoveService {
 
             try {
                 boolean isFirst = false;
-                int mod = i % 20;
-                int div = i / 20;
+                int mod = i % 10;
+                int div = i / 10;
                 if (mod == 0) {
                     isFirst = true;
                     File file = new File(  "t_uc_patients-" + (div + 1) + ".txt");
@@ -188,6 +190,7 @@ public class MoveService {
                     tmpMap.put("relation_type", "5");
                     tmpMap.put("id_type", null == patient.getIdType() ? 1:patient.getIdType());
                     tmpMap.put("id_no", patient.getIdNo());
+                    tmpMap.put("pat_his_no", patient.getPatHisNo());
                     tmpMap.put("sex", StringUtils.equalsAny(patient.getSex(), "M","F") ? "":patient.getSex());
                     tmpMap.put("birthday", patient.getBirth());
                     tmpMap.put("mobile", patient.getMobile());

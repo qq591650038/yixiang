@@ -241,7 +241,7 @@ public class UserVo implements Serializable {
     private String parentIdNoCipher;
 
     public String getId() {
-        return pre + count;
+        return String.valueOf(Long.parseLong(pre) + count);
     }
 
     public void setId(String id) {
